@@ -1,0 +1,75 @@
+# SECTION 8 — EXPORT FIGURES (inline + saved)
+out_dir = "/kaggle/working"
+os.makedirs(out_dir, exist_ok=True)
+
+# Confusion Matrix
+plt.figure()
+cm = confusion_matrix(y, y_pred_final)
+plt.imshow(cm, cmap='Blues')
+plt.title("Confusion Matrix (Final Model)")
+plt.colorbar()
+plt.savefig(os.path.join(out_dir, "confusion_matrix.png"))
+plt.show()
+plt.close()
+
+# ROC Curve
+y_pred_prob = final_model.predict(X)
+fpr, tpr, _ = roc_curve(y, y_pred_prob[:,1])
+roc_auc = auc(fpr, tpr)
+plt.figure()
+plt.plot(fpr, tpr, linewidth=2)
+plt.plot([0,1],[0,1],'k--')
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title(f"ROC Curve (AUC = {roc_auc:.4f})")
+plt.grid(True)
+plt.savefig(os.path.join(out_dir, "roc_curve.png"))
+plt.show()
+plt.close()
+
+# Per-Fold Metrics (Grouped Bar Plot)
+metrics_names = ['Accuracy','Sensitivity','Specificity','Precision','F1','AUC']
+x = np.arange(metrics.shape[0])  # folds
+width = 0.15
+
+plt.figure(figsize=(10,6))
+for i in range(metrics.shape[1]):
+    plt.bar(x + i*width, metrics[:,i], width, label=metrics_names[i])
+plt.xlabel("Fold")
+plt.ylabel("Score")
+plt.title("Per-Fold Performance Metrics")
+plt.ylim([0.7,1.0])
+plt.legend(loc='lower center', ncol=3)
+plt.grid(True)
+plt.savefig(os.path.join(out_dir, "per_fold_metrics.png"))
+plt.show()
+plt.close()
+
+# PCA Projection (2D)
+plt.figure()
+for lab in np.unique(labels):
+    plt.scatter(score[labels==lab,0], score[labels==lab,1], label=le.classes_[lab])
+plt.scatter(score[outliers,0], score[outliers,1], c='k', marker='s', label='Outliers')
+plt.xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.2f}%)")
+plt.ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.2f}%)")
+plt.title("2D PCA Projection of Hidden Layer Embeddings")
+plt.legend()
+plt.grid(True)
+plt.savefig(os.path.join(out_dir, "pca_projection_2d.png"))
+plt.show()
+plt.close()
+
+# PCA Projection (3D)
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(score[:,0], score[:,1], score[:,2], c=labels, cmap='coolwarm')
+ax.scatter(score[outliers,0], score[outliers,1], score[outliers,2], c='k', marker='s')
+ax.set_xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.2f}%)")
+ax.set_ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.2f}%)")
+ax.set_zlabel(f"PC3 ({pca.explained_variance_ratio_[2]*100:.2f}%)")
+ax.set_title("3D PCA Projection of Hidden Layer Embeddings")
+plt.savefig(os.path.join(out_dir, "pca_projection_3d.png"))
+plt.show()
+plt.close()
+
+print("✅ Figures displayed inline and exported to /kaggle/working")
